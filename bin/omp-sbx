@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -euo pipefail
+
+name="omp-$(basename "$PWD")"
+omp_kit="git+https://github.com/fgladisch/sbx-kit-omp-dev-shell.git"
+
+if ! sbx ls -q | grep -Fxq "$name"; then
+  sbx run -d \
+    --name "$name" \
+    --kit "$omp_kit" \
+    omp "$PWD"
+fi
+
+sbx exec "$name" -- rm -rf /home/agent/.omp
+sbx cp "$HOME/.omp" "$name:/home/agent/.omp"
+
+sbx exec -u root "$name" -- chown -R 1000:1000 /home/agent/.omp
+
+sbx exec "$name" -- omp update --plugins
+sbx run --name "$name"

@@ -54,6 +54,29 @@ sbx run \
 
 The mixin-style `requires.agent: pi` dependency is no longer needed: `spec.yaml` now supplies the `shell-docker` sandbox image, installs OMP, and launches `omp` directly.
 
+### Launcher
+
+[`bin/omp-sbx`](bin/omp-sbx) wraps the full per-project lifecycle. Run it from a repository to:
+
+1. create or reuse a sandbox named `omp-<repository>`;
+2. copy the host's `~/.omp` configuration into the sandbox;
+3. update OMP and its installed plugins;
+4. attach to the OMP session.
+
+Link it into `~/bin`:
+
+```bash
+ln -s "$(pwd)/bin/omp-sbx" "$HOME/bin/omp-sbx"
+```
+
+Then launch OMP from any repository:
+
+```bash
+omp-sbx
+```
+
+The launcher replaces the sandbox's `/home/agent/.omp` directory with the current host configuration each time it runs.
+
 ## Network access
 
 The kit allows the domains needed for:
