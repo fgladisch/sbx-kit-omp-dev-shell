@@ -1,6 +1,6 @@
 # OMP development shell kit
 
-A standalone Docker Sandboxes kit for [Oh My Pi (`omp`)](https://github.com/can1357/oh-my-pi) with Zsh, [fnm](https://github.com/Schniz/fnm), and repository-aware Node.js setup.
+A standalone Docker Sandboxes kit for [Oh My Pi (`omp`)](https://github.com/can1357/oh-my-pi) with Zsh, [fnm](https://github.com/Schniz/fnm), [pnpm](https://pnpm.io/), and repository-aware Node.js setup.
 
 ## What it does
 
@@ -10,7 +10,8 @@ During sandbox creation, the kit:
 - configures OMP as the sandbox entrypoint with tool approvals delegated to the sandbox boundary;
 - installs Zsh and makes it the `agent` user's login shell;
 - installs fnm for the `agent` user;
-- exposes OMP and fnm on the sandbox `PATH`;
+- installs pnpm for the `agent` user;
+- exposes OMP, fnm, and pnpm on the sandbox `PATH`;
 - maps the `anthropic` and `sonarqube` sandbox secrets to proxy-managed `ANTHROPIC_API_KEY` and `SONARQUBE_TOKEN` environment variables;
 - initializes fnm from `~/.zshrc`.
 
@@ -94,7 +95,7 @@ The sandbox receives proxy-managed sentinel values rather than the real credenti
 The kit allows the domains needed for:
 
 - Ubuntu and Docker APT metadata;
-- the OMP and fnm installers plus GitHub release assets;
+- the OMP, fnm, and pnpm installers plus GitHub release assets and the npm registry;
 - Node.js distributions from `nodejs.org`;
 - OpenAI/Codex and Anthropic model endpoints.
 
@@ -112,7 +113,7 @@ sbx kit validate .
 
 ## Lifecycle
 
-- `commands.install` installs OMP, Zsh, and fnm during sandbox creation.
+- `commands.install` installs OMP, Zsh, pnpm, and fnm during sandbox creation.
 - `commands.initFiles` creates the repository Node.js setup command with `${WORKDIR}` resolved by Docker Sandboxes.
 - `commands.startup` runs the setup command whenever the sandbox starts.
 

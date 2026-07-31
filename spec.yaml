@@ -19,6 +19,7 @@ caps:
       - ports.ubuntu.com
       - download.docker.com
       - fnm.vercel.app
+      - get.pnpm.io
       - omp.sh
       - api.github.com
       - github.com
@@ -26,6 +27,7 @@ caps:
       - raw.githubusercontent.com
       - release-assets.githubusercontent.com
       - nodejs.org
+      - registry.npmjs.org
       - chatgpt.com
       - auth.openai.com
       - api.openai.com
@@ -83,6 +85,21 @@ commands:
         usermod --shell /bin/zsh agent
       user: "0"
       description: "Install zsh and make it the agent user's login shell"
+    - command: |
+        set -eu
+        if [ ! -x "$HOME/.local/share/pnpm/bin/pnpm" ]; then
+          installer=$(mktemp)
+          trap 'rm -f "$installer"' EXIT
+          curl -fsSL https://get.pnpm.io/install.sh -o "$installer"
+          PNPM_HOME="$HOME/.local/share/pnpm" SHELL=/bin/zsh sh "$installer"
+        fi
+      user: "1000"
+      description: "Install pnpm for the agent user"
+    - command: |
+        set -eu
+        ln -sf /home/agent/.local/share/pnpm/bin/pnpm /usr/local/bin/pnpm
+      user: "0"
+      description: "Expose pnpm on the sandbox PATH"
     - command: |
         set -eu
         if [ ! -x "$HOME/.local/share/fnm/fnm" ]; then
