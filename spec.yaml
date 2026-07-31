@@ -32,6 +32,28 @@ caps:
       - api.anthropic.com
       - console.anthropic.com
       - claude.ai
+      - api.sonarcloud.io
+
+credentials:
+  - service: anthropic
+    apiKey:
+      name: ANTHROPIC_API_KEY
+      proxyManaged: true
+      inject:
+        - domain: api.anthropic.com
+          header: x-api-key
+          format: "%s"
+        - domain: console.anthropic.com
+          header: x-api-key
+          format: "%s"
+  - service: sonarqube
+    apiKey:
+      name: SONARQUBE_TOKEN
+      proxyManaged: true
+      inject:
+        - domain: api.sonarcloud.io
+          header: Authorization
+          format: "Bearer %s"
 
 commands:
   install:

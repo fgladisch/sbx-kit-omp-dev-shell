@@ -11,6 +11,7 @@ During sandbox creation, the kit:
 - installs Zsh and makes it the `agent` user's login shell;
 - installs fnm for the `agent` user;
 - exposes OMP and fnm on the sandbox `PATH`;
+- maps the `anthropic` and `sonarqube` sandbox secrets to proxy-managed `ANTHROPIC_API_KEY` and `SONARQUBE_TOKEN` environment variables;
 - initializes fnm from `~/.zshrc`.
 
 At sandbox startup, fnm detects the repository's requested Node.js version and installs it when necessary. Detection supports:
@@ -76,6 +77,17 @@ omp-sbx
 ```
 
 The launcher replaces the sandbox's `/home/agent/.omp` directory with the current host configuration each time it runs.
+
+## Credentials
+
+Store both credentials globally before creating a sandbox:
+
+```bash
+sbx secret set -g anthropic
+sbx secret set -g sonarqube
+```
+
+The sandbox receives proxy-managed sentinel values rather than the real credentials. The host-side proxy replaces them in requests to the configured Anthropic and SonarCloud API endpoints.
 
 ## Network access
 
