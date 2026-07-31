@@ -22,6 +22,18 @@ At sandbox startup, fnm detects the repository's requested Node.js version and i
 
 The repository must declare a Node.js version through one of these mechanisms. Sandbox startup fails when fnm cannot resolve a version.
 
+## Allow the kit publisher
+
+Docker Sandboxes restricts remote kit publishers through `kit.allowedSources`. Add `github.com/fgladisch/` while preserving any sources you already trust:
+
+```bash
+sbx settings get kit.allowedSources
+sbx settings set kit.allowedSources \
+  '["docker.io/","github.com/docker/","github.com/fgladisch/"]'
+```
+
+The exact array is an example based on the default Docker sources. Include any additional entries from your existing setting.
+
 ## Usage
 
 Compose this mixin with the upstream Pi kit:
