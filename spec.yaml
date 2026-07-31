@@ -1,0 +1,70 @@
+schemaVersion: "1"
+kind: mixin
+name: pi-dev-shell
+displayName: Pi development shell
+description: "Adds zsh, fnm, and repository-aware Node.js setup to Pi sandboxes"
+requires:
+  agent: pi
+
+caps:
+  network:
+    allow:
+      - archive.ubuntu.com
+      - security.ubuntu.com
+      - ports.ubuntu.com
+      - download.docker.com
+      - fnm.vercel.app
+      - github.com
+      - objects.githubusercontent.com
+      - release-assets.githubusercontent.com
+      - nodejs.org
+
+commands:
+  install:
+    - command: |
+        set -eu
+        export DEBIAN_FRONTEND=noninteractive
+        if ! command -v zsh >/dev/null 2>&1; then
+          apt-get update
+          apt-get install -y --no-install-recommends zsh
+          rm -rf /var/lib/apt/lists/*
+        fi
+        usermod --shell /bin/zsh agent
+      user: "0"
+      description: "Install zsh and make it the agent user's login shell"
+    - command: |
+        set -eu
+        if [ ! -x "$HOME/.local/share/fnm/fnm" ]; then
+          installer=$(mktemp)
+          trap 'rm -f "$installer"' EXIT
+          curl -fsSL https://fnm.vercel.app/install -o "$installer"
+          bash "$installer" --skip-shell
+        fi
+      user: "1000"
+      description: "Install fnm for the agent user"
+    - command: |
+        set -eu
+        ln -sf /home/agent/.local/share/fnm/fnm /usr/local/bin/fnm
+      user: "0"
+      description: "Expose fnm on the sandbox PATH"
+    - command: |
+        set -eu
+        init='eval "$(fnm env --use-on-cd --version-file-strategy=recursive --resolve-engines --shell zsh)"'
+        touch "$HOME/.zshrc"
+        grep -Fqx "$init" "$HOME/.zshrc" || printf '\n%s\n' "$init" >> "$HOME/.zshrc"
+      user: "1000"
+      description: "Activate fnm in interactive zsh shells"
+  initFiles:
+    - path: /home/agent/.local/bin/setup-project-node
+      content: |
+        #!/bin/zsh
+        set -euo pipefail
+        cd "${WORKDIR}"
+        eval "$(fnm env --version-file-strategy=recursive --resolve-engines --shell zsh)"
+        fnm use --install-if-missing
+      mode: "0755"
+      description: "Create repository-aware Node.js setup command"
+  startup:
+    - command: [/home/agent/.local/bin/setup-project-node]
+      user: "1000"
+      description: "Install and select the repository's declared Node.js version"
