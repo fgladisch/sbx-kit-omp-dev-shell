@@ -1,16 +1,16 @@
-# Pi development shell kit
+# OMP development shell kit
 
-A Docker Sandboxes mixin for the [Pi coding agent](https://github.com/badlogic/pi-mono) that adds Zsh, [fnm](https://github.com/Schniz/fnm), and repository-aware Node.js setup.
-
-It is designed to compose with Docker's upstream [Pi sandbox kit](https://github.com/docker/sbx-kits-contrib/tree/main/pi).
+A standalone Docker Sandboxes kit for [Oh My Pi (`omp`)](https://github.com/can1357/oh-my-pi) with Zsh, [fnm](https://github.com/Schniz/fnm), and repository-aware Node.js setup.
 
 ## What it does
 
 During sandbox creation, the kit:
 
+- installs the latest OMP prebuilt release for the sandbox architecture;
+- configures OMP as the sandbox entrypoint with tool approvals delegated to the sandbox boundary;
 - installs Zsh and makes it the `agent` user's login shell;
 - installs fnm for the `agent` user;
-- exposes fnm as `/usr/local/bin/fnm`;
+- exposes OMP and fnm on the sandbox `PATH`;
 - initializes fnm from `~/.zshrc`.
 
 At sandbox startup, fnm detects the repository's requested Node.js version and installs it when necessary. Detection supports:
@@ -36,44 +36,38 @@ The exact array is an example based on the default Docker sources. Include any a
 
 ## Usage
 
-Compose this mixin with the upstream Pi kit:
+The kit is standalone; do not compose it with the upstream Pi kit:
 
 ```bash
 sbx run \
-  --kit "git+https://github.com/docker/sbx-kits-contrib.git#dir=pi" \
-  --kit "git+https://github.com/fgladisch/sbx-kit-pi-dev-shell.git" \
-  pi "$PWD"
+  --kit "git+https://github.com/fgladisch/sbx-kit-omp-dev-shell.git" \
+  omp "$PWD"
 ```
 
-For reproducible sandbox creation, pin both kits to full commit SHAs:
+For reproducible sandbox configuration, pin the kit to a full commit SHA:
 
 ```bash
 sbx run \
-  --kit "git+https://github.com/docker/sbx-kits-contrib.git#ref=<pi-kit-commit>&dir=pi" \
-  --kit "git+https://github.com/fgladisch/sbx-kit-pi-dev-shell.git#ref=<kit-commit>" \
-  pi "$PWD"
+  --kit "git+https://github.com/fgladisch/sbx-kit-omp-dev-shell.git#ref=<kit-commit>" \
+  omp "$PWD"
 ```
 
-The mixin can also be added to an existing sandbox, although recreating the sandbox gives the clearest lifecycle behavior:
-
-```bash
-sbx kit add <sandbox-name> \
-  "git+https://github.com/fgladisch/sbx-kit-pi-dev-shell.git"
-```
+The mixin-style `requires.agent: pi` dependency is no longer needed: `spec.yaml` now supplies the `shell-docker` sandbox image, installs OMP, and launches `omp` directly.
 
 ## Network access
 
 The kit allows the domains needed for:
 
 - Ubuntu and Docker APT metadata;
-- the fnm installer and GitHub release assets;
-- Node.js distributions from `nodejs.org`.
+- the OMP and fnm installers plus GitHub release assets;
+- Node.js distributions from `nodejs.org`;
+- OpenAI/Codex and Anthropic model endpoints.
 
 Review `caps.network.allow` in [`spec.yaml`](spec.yaml) before use if your environment requires a narrower egress policy.
 
 ## Compatibility
 
-The kit currently uses `schemaVersion: "1"`, matching Docker Sandboxes `v0.37.1` and the upstream Pi kit at the time of publication.
+The kit uses `schemaVersion: "1"` with the current `kind: sandbox`, `sandbox`, and `caps.network.allow` fields. It validates with Docker Sandboxes `v0.37.1`.
 
 Validate it locally with:
 
@@ -83,7 +77,7 @@ sbx kit validate .
 
 ## Lifecycle
 
-- `commands.install` runs during sandbox creation.
+- `commands.install` installs OMP, Zsh, and fnm during sandbox creation.
 - `commands.initFiles` creates the repository Node.js setup command with `${WORKDIR}` resolved by Docker Sandboxes.
 - `commands.startup` runs the setup command whenever the sandbox starts.
 

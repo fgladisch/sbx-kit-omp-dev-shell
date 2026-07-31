@@ -1,10 +1,15 @@
 schemaVersion: "1"
-kind: mixin
-name: pi-dev-shell
-displayName: Pi development shell
-description: "Adds zsh, fnm, and repository-aware Node.js setup to Pi sandboxes"
-requires:
-  agent: pi
+kind: sandbox
+name: omp
+displayName: OMP development shell
+description: "Runs Oh My Pi with zsh, fnm, and repository-aware Node.js setup"
+
+sandbox:
+  image: "docker/sandbox-templates:shell-docker"
+  aiFilename: AGENTS.md
+  entrypoint:
+    run: [omp]
+    args: ["--approval-mode=yolo"]
 
 caps:
   network:
@@ -14,13 +19,37 @@ caps:
       - ports.ubuntu.com
       - download.docker.com
       - fnm.vercel.app
+      - omp.sh
+      - api.github.com
       - github.com
       - objects.githubusercontent.com
+      - raw.githubusercontent.com
       - release-assets.githubusercontent.com
       - nodejs.org
+      - chatgpt.com
+      - auth.openai.com
+      - api.openai.com
+      - api.anthropic.com
+      - console.anthropic.com
+      - claude.ai
 
 commands:
   install:
+    - command: |
+        set -eu
+        if [ ! -x "$HOME/.local/bin/omp" ]; then
+          installer=$(mktemp)
+          trap 'rm -f "$installer"' EXIT
+          curl -fsSL https://omp.sh/install -o "$installer"
+          sh "$installer" --binary
+        fi
+      user: "1000"
+      description: "Install the Oh My Pi coding agent"
+    - command: |
+        set -eu
+        ln -sf /home/agent/.local/bin/omp /usr/local/bin/omp
+      user: "0"
+      description: "Expose omp on the sandbox PATH"
     - command: |
         set -eu
         export DEBIAN_FRONTEND=noninteractive
