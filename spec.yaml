@@ -77,14 +77,14 @@ commands:
     - command: |
         set -eu
         export DEBIAN_FRONTEND=noninteractive
-        if ! command -v zsh >/dev/null 2>&1; then
+        if ! command -v zsh >/dev/null 2>&1 || ! dpkg-query -W build-essential >/dev/null 2>&1; then
           apt-get update
-          apt-get install -y --no-install-recommends zsh
+          apt-get install -y --no-install-recommends build-essential zsh
           rm -rf /var/lib/apt/lists/*
         fi
         usermod --shell /bin/zsh agent
       user: "0"
-      description: "Install zsh and make it the agent user's login shell"
+      description: "Install the native build toolchain and zsh, then set the agent user's login shell"
     - command: |
         set -eu
         if [ ! -x "$HOME/.local/share/pnpm/bin/pnpm" ]; then
@@ -97,7 +97,11 @@ commands:
       description: "Install pnpm for the agent user"
     - command: |
         set -eu
-        ln -sf /home/agent/.local/share/pnpm/bin/pnpm /usr/local/bin/pnpm
+        cat > /usr/local/bin/pnpm <<'EOF'
+        #!/bin/sh
+        exec /home/agent/.local/share/pnpm/bin/pnpm "$@"
+        EOF
+        chmod 0755 /usr/local/bin/pnpm
       user: "0"
       description: "Expose pnpm on the sandbox PATH"
     - command: |

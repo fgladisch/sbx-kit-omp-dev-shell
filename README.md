@@ -9,6 +9,7 @@ During sandbox creation, the kit:
 - installs the latest OMP prebuilt release for the sandbox architecture;
 - configures OMP as the sandbox entrypoint with tool approvals delegated to the sandbox boundary;
 - installs Zsh and makes it the `agent` user's login shell;
+- installs the native compilation toolchain from Ubuntu's `build-essential` package;
 - installs fnm for the `agent` user;
 - installs pnpm for the `agent` user;
 - exposes OMP, fnm, and pnpm on the sandbox `PATH`;
