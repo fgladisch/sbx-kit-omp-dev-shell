@@ -61,16 +61,6 @@ sbx kit add <sandbox-name> \
   "git+https://github.com/fgladisch/sbx-kit-pi-dev-shell.git"
 ```
 
-## Pi commands through Zsh
-
-The kit sets Zsh as the login shell. If Pi is configured with [`@fgladisch/pi-zsh-shell`](https://github.com/fgladisch/pi-extensions/tree/main/packages/pi-zsh-shell), add the fnm initialization to `~/.pi/agent/zsh-functions` so Pi's non-interactive `zsh -f` commands select the repository Node.js version:
-
-```zsh
-eval "$(fnm env --use-on-cd --version-file-strategy=recursive --resolve-engines --shell zsh)"
-```
-
-The `pi-sbx` wrapper in the author's setup copies that file from the host and appends this line idempotently.
-
 ## Network access
 
 The kit allows the domains needed for:
