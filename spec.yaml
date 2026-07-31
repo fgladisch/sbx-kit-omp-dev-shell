@@ -134,9 +134,41 @@ commands:
         cd "${WORKDIR}"
         eval "$(fnm env --version-file-strategy=recursive --resolve-engines --shell zsh)"
         fnm use --install-if-missing
+        node_path=$(readlink -f "$(command -v node)")
+        case "$node_path" in
+          "$HOME"/.local/share/fnm/node-versions/*/installation/bin/node) ;;
+          *)
+            printf 'Refusing to expose unexpected Node.js path: %s\n' "$node_path" >&2
+            exit 1
+            ;;
+        esac
+        runtime_bin=$(dirname "$node_path")
+        printf '%s\n' "$runtime_bin" > "$HOME/.local/share/fnm/active-bin"
       mode: "0755"
-      description: "Create repository-aware Node.js setup command"
+      description: "Create repository-aware Node.js setup and runtime discovery command"
+    - path: /home/agent/.local/bin/expose-project-node
+      content: |
+        set -eu
+        runtime_bin=$(cat /home/agent/.local/share/fnm/active-bin)
+        case "$runtime_bin" in
+          /home/agent/.local/share/fnm/node-versions/*/installation/bin) ;;
+          *)
+            printf 'Refusing to expose unexpected fnm runtime: %s\n' "$runtime_bin" >&2
+            exit 1
+            ;;
+        esac
+        for executable in node npm npx corepack; do
+          if [ -e "$runtime_bin/$executable" ]; then
+            ln -sf "$runtime_bin/$executable" "/usr/local/bin/$executable"
+          fi
+        done
+        test -x /usr/local/bin/node
+      mode: "0755"
+      description: "Create global fnm Node.js runtime exposure command"
   startup:
     - command: [/home/agent/.local/bin/setup-project-node]
       user: "1000"
       description: "Install and select the repository's declared Node.js version"
+    - command: [/home/agent/.local/bin/expose-project-node]
+      user: "0"
+      description: "Expose the repository-selected fnm Node.js runtime globally"

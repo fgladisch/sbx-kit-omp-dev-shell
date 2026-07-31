@@ -12,7 +12,7 @@ During sandbox creation, the kit:
 - installs the native compilation toolchain from Ubuntu's `build-essential` package;
 - installs fnm for the `agent` user;
 - installs pnpm for the `agent` user;
-- exposes OMP, fnm, and pnpm on the sandbox `PATH`;
+- exposes OMP, fnm, pnpm, and the repository-selected fnm Node.js runtime on the sandbox-wide `PATH`;
 - maps the `anthropic` and `sonarqube` sandbox secrets to proxy-managed `ANTHROPIC_API_KEY` and `SONARQUBE_TOKEN` environment variables;
 - initializes fnm from `~/.zshrc`.
 
@@ -24,6 +24,8 @@ At sandbox startup, fnm detects the repository's requested Node.js version and i
 - version files in parent directories.
 
 The repository must declare a Node.js version through one of these mechanisms. Sandbox startup fails when fnm cannot resolve a version.
+
+The selected fnm runtime becomes the sandbox's global Node.js default, so OMP tool calls and non-interactive commands use the repository version instead of the base image's system Node.js.
 
 ## Allow the kit publisher
 
