@@ -64,9 +64,9 @@ The mixin-style `requires.agent: pi` dependency is no longer needed: `spec.yaml`
 [`bin/omp-sbx`](bin/omp-sbx) wraps the full per-project lifecycle. Run it from a repository to:
 
 1. create or reuse a sandbox named `omp-<repository>`;
-2. copy the host's `~/.omp` configuration into the sandbox;
+2. seed a newly created sandbox with the host's `~/.omp` configuration;
 3. update OMP and its installed plugins;
-4. attach to the OMP session.
+4. attach to OMP and forward any supplied OMP arguments.
 
 Link it into `~/bin`:
 
@@ -80,7 +80,17 @@ Then launch OMP from any repository:
 omp-sbx
 ```
 
-The launcher replaces the sandbox's `/home/agent/.omp` directory with the current host configuration each time it runs.
+Resume the latest project session with `--continue`, or open OMP's session
+picker with `--resume`:
+
+```bash
+omp-sbx --continue
+omp-sbx --resume
+```
+
+The launcher copies the host's `~/.omp` directory into `/home/agent/.omp` only
+when it creates a sandbox. Later runs preserve the sandbox's own sessions.
+Removing the named sandbox with `sbx rm` also removes those sessions.
 
 ## Credentials
 

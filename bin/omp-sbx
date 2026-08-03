@@ -10,12 +10,10 @@ if ! sbx ls -q | grep -Fxq "$name"; then
     --name "$name" \
     --kit "$omp_kit" \
     omp "$PWD"
+  sbx exec "$name" -- rm -rf /home/agent/.omp
+  sbx cp "$HOME/.omp" "$name:/home/agent/.omp"
+  sbx exec -u root "$name" -- chown -R 1000:1000 /home/agent/.omp
 fi
 
-sbx exec "$name" -- rm -rf /home/agent/.omp
-sbx cp "$HOME/.omp" "$name:/home/agent/.omp"
-
-sbx exec -u root "$name" -- chown -R 1000:1000 /home/agent/.omp
-
 sbx exec "$name" -- omp update --plugins
-sbx run --name "$name"
+sbx run --name "$name" -- "$@"
