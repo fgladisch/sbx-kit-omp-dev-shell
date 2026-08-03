@@ -11,8 +11,7 @@ During sandbox creation, the kit:
 - installs Zsh and makes it the `agent` user's login shell;
 - installs the native compilation toolchain from Ubuntu's `build-essential` package;
 - installs fnm for the `agent` user;
-- installs pnpm for the `agent` user;
-- exposes OMP, fnm, pnpm, and the repository-selected fnm Node.js runtime on the sandbox-wide `PATH`;
+- exposes OMP and fnm on the sandbox-wide `PATH`;
 - maps the `anthropic` and `sonarqube` sandbox secrets to proxy-managed `ANTHROPIC_API_KEY` and `SONARQUBE_TOKEN` environment variables;
 - initializes fnm from `~/.zshrc`.
 
@@ -23,9 +22,11 @@ At sandbox startup, fnm detects the repository's requested Node.js version and i
 - `package.json#engines.node`;
 - version files in parent directories.
 
+It installs pnpm and the TypeScript language server once per selected Node.js version, then links the selected runtime and tools into the `agent` user's `~/.local/bin`.
+
 The repository must declare a Node.js version through one of these mechanisms. Sandbox startup fails when fnm cannot resolve a version.
 
-The selected fnm runtime becomes the sandbox's global Node.js default, so OMP tool calls and non-interactive commands use the repository version instead of the base image's system Node.js.
+The selected fnm runtime becomes the `agent` user's Node.js default, so OMP tool calls and non-interactive commands use the repository version instead of the base image's system Node.js.
 
 ## Allow the kit publisher
 
@@ -146,8 +147,8 @@ sbx kit validate .
 
 ## Lifecycle
 
-- `commands.install` installs OMP, Zsh, pnpm, and fnm during sandbox creation.
-- `commands.initFiles` creates the repository Node.js setup command with `${WORKDIR}` resolved by Docker Sandboxes.
-- `commands.startup` runs the setup command whenever the sandbox starts.
+- `commands.install` installs OMP, Zsh, and fnm during sandbox creation.
+- `commands.initFiles` writes one compact setup command with the workspace path.
+- `commands.startup` selects the repository's Node.js version and provisions pnpm and the TypeScript language server.
 
 All installation steps are idempotent so sandbox startup and recreation can safely repeat them.

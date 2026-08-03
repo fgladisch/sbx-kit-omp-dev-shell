@@ -19,7 +19,6 @@ caps:
       - ports.ubuntu.com
       - download.docker.com
       - fnm.vercel.app
-      - get.pnpm.io
       - omp.sh
       - api.github.com
       - github.com
@@ -71,11 +70,6 @@ commands:
       description: "Install the Oh My Pi coding agent"
     - command: |
         set -eu
-        ln -sf /home/agent/.local/bin/omp /usr/local/bin/omp
-      user: "0"
-      description: "Expose omp on the sandbox PATH"
-    - command: |
-        set -eu
         export DEBIAN_FRONTEND=noninteractive
         if ! command -v zsh >/dev/null 2>&1 || ! dpkg-query -W build-essential >/dev/null 2>&1; then
           apt-get update
@@ -85,25 +79,6 @@ commands:
         usermod --shell /bin/zsh agent
       user: "0"
       description: "Install the native build toolchain and zsh, then set the agent user's login shell"
-    - command: |
-        set -eu
-        if [ ! -x "$HOME/.local/share/pnpm/bin/pnpm" ]; then
-          installer=$(mktemp)
-          trap 'rm -f "$installer"' EXIT
-          curl -fsSL https://get.pnpm.io/install.sh -o "$installer"
-          PNPM_HOME="$HOME/.local/share/pnpm" SHELL=/bin/zsh sh "$installer"
-        fi
-      user: "1000"
-      description: "Install pnpm for the agent user"
-    - command: |
-        set -eu
-        cat > /usr/local/bin/pnpm <<'EOF'
-        #!/bin/sh
-        exec /home/agent/.local/share/pnpm/bin/pnpm "$@"
-        EOF
-        chmod 0755 /usr/local/bin/pnpm
-      user: "0"
-      description: "Expose pnpm on the sandbox PATH"
     - command: |
         set -eu
         if [ ! -x "$HOME/.local/share/fnm/fnm" ]; then
@@ -116,9 +91,10 @@ commands:
       description: "Install fnm for the agent user"
     - command: |
         set -eu
+        ln -sf /home/agent/.local/bin/omp /usr/local/bin/omp
         ln -sf /home/agent/.local/share/fnm/fnm /usr/local/bin/fnm
       user: "0"
-      description: "Expose fnm on the sandbox PATH"
+      description: "Expose omp and fnm on the sandbox PATH"
     - command: |
         set -eu
         init='eval "$(fnm env --use-on-cd --version-file-strategy=recursive --resolve-engines --shell zsh)"'
@@ -129,46 +105,21 @@ commands:
   initFiles:
     - path: /home/agent/.local/bin/setup-project-node
       content: |
-        #!/bin/zsh
-        set -euo pipefail
-        cd "${WORKDIR}"
-        eval "$(fnm env --version-file-strategy=recursive --resolve-engines --shell zsh)"
-        fnm use --install-if-missing
-        node_path=$(readlink -f "$(command -v node)")
-        case "$node_path" in
-          "$HOME"/.local/share/fnm/node-versions/*/installation/bin/node) ;;
-          *)
-            printf 'Refusing to expose unexpected Node.js path: %s\n' "$node_path" >&2
-            exit 1
-            ;;
-        esac
-        runtime_bin=$(dirname "$node_path")
-        printf '%s\n' "$runtime_bin" > "$HOME/.local/share/fnm/active-bin"
-      mode: "0755"
-      description: "Create repository-aware Node.js setup and runtime discovery command"
-    - path: /home/agent/.local/bin/expose-project-node
-      content: |
+        #!/bin/bash
         set -eu
-        runtime_bin=$(cat /home/agent/.local/share/fnm/active-bin)
-        case "$runtime_bin" in
-          /home/agent/.local/share/fnm/node-versions/*/installation/bin) ;;
-          *)
-            printf 'Refusing to expose unexpected fnm runtime: %s\n' "$runtime_bin" >&2
-            exit 1
-            ;;
-        esac
-        for executable in node npm npx corepack; do
-          if [ -e "$runtime_bin/$executable" ]; then
-            ln -sf "$runtime_bin/$executable" "/usr/local/bin/$executable"
-          fi
+        cd "${WORKDIR}"
+        eval "$(fnm env --version-file-strategy=recursive --resolve-engines --shell bash)"
+        fnm use --install-if-missing
+        runtime_bin=$(dirname "$(readlink -f "$(command -v node)")")
+        if [ ! -x "$runtime_bin/pnpm" ] || [ ! -x "$runtime_bin/typescript-language-server" ]; then
+          npm install --global --prefix "$(dirname "$runtime_bin")" pnpm typescript-language-server typescript
+        fi
+        for executable in node npm npx corepack pnpm typescript-language-server; do
+          ln -sf "$runtime_bin/$executable" "$HOME/.local/bin/$executable"
         done
-        test -x /usr/local/bin/node
       mode: "0755"
-      description: "Create global fnm Node.js runtime exposure command"
+      description: "Create the repository-aware Node.js setup command"
   startup:
     - command: [/home/agent/.local/bin/setup-project-node]
       user: "1000"
-      description: "Install and select the repository's declared Node.js version"
-    - command: [/home/agent/.local/bin/expose-project-node]
-      user: "0"
-      description: "Expose the repository-selected fnm Node.js runtime globally"
+      description: "Select the repository's Node.js version and install its Node.js tooling"
