@@ -65,8 +65,9 @@ The mixin-style `requires.agent: pi` dependency is no longer needed: `spec.yaml`
 
 1. create or reuse a sandbox named `omp-<repository>`;
 2. seed a newly created sandbox with the host's `~/.omp` configuration;
-3. update OMP and its installed plugins;
-4. attach to OMP and forward any supplied OMP arguments.
+3. copy the version-controlled OMP skills into a newly created sandbox;
+4. update OMP and its installed plugins;
+5. attach to OMP and forward any supplied OMP arguments.
 
 Link it into `~/bin`:
 
@@ -91,6 +92,25 @@ omp-sbx --resume
 The launcher copies the host's `~/.omp` directory into `/home/agent/.omp` only
 when it creates a sandbox. Later runs preserve the sandbox's own sessions.
 Removing the named sandbox with `sbx rm` also removes those sessions.
+
+### Skills
+
+Keep shared skills in a dedicated Git repository. The launcher copies
+`~/code/omp-skills/skills` by default; override the source directory with
+`OMP_SKILLS_DIR`.
+
+Expose the same repository to host OMP through its canonical user skills path:
+
+```bash
+skills_dir="${OMP_SKILLS_DIR:-$HOME/code/omp-skills/skills}"
+mkdir -p "$HOME/.agents"
+ln -sfn "$skills_dir" "$HOME/.agents/skills"
+rm -f "$HOME/.omp/agent/skills"
+```
+
+When creating a sandbox, the launcher copies the source directory to
+`/home/agent/.agents/skills`. Existing sandboxes and their skills are left
+unchanged on later launches.
 
 ## Credentials
 
