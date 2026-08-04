@@ -3,7 +3,7 @@
 set -euo pipefail
 
 name="omp-$(basename "$PWD")"
-omp_kit="git+https://github.com/fgladisch/sbx-kit-omp-dev-shell.git"
+omp_kit="${OMP_KIT:-git+https://github.com/fgladisch/sbx-kit-omp-dev-shell.git}"
 skills_dir="${OMP_SKILLS_DIR:-${HOME}/code/omp-skills/skills}"
 
 if ! sbx ls -q | grep -Fxq "$name"; then
@@ -11,8 +11,9 @@ if ! sbx ls -q | grep -Fxq "$name"; then
     --name "$name" \
     --kit "$omp_kit" \
     omp "$PWD"
-  sbx cp "$HOME/.omp/." "$name:/home/agent/.omp"
-  sbx exec -u root "$name" -- chown -R 1000:1000 /home/agent/.omp
+  sbx exec "$name" -- mkdir -p /home/agent/.omp
+  sbx cp "$HOME/.omp/agent" "$name:/home/agent/.omp"
+  sbx exec -u root "$name" -- chown -R 1000:1000 /home/agent/.omp/agent
   sbx exec "$name" -- mkdir -p /home/agent/.agents
   sbx cp "$skills_dir" "$name:/home/agent/.agents/skills"
   sbx exec -u root "$name" -- chown -R 1000:1000 /home/agent/.agents/skills

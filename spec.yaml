@@ -27,6 +27,8 @@ caps:
       - release-assets.githubusercontent.com
       - nodejs.org
       - registry.npmjs.org
+      - cdn.playwright.dev
+      - playwright.download.prss.microsoft.com
       - chatgpt.com
       - auth.openai.com
       - api.openai.com
@@ -89,6 +91,36 @@ commands:
         fi
       user: "1000"
       description: "Install fnm for the agent user"
+    - command: |
+        set -eu
+        fnm="$HOME/.local/share/fnm/fnm"
+        eval "$("$fnm" env --version-file-strategy=recursive --resolve-engines --shell bash)"
+        "$fnm" install --lts --use
+        playwright_version=1.62.1
+        browser_root="$HOME/.cache/ms-playwright"
+        marker="$browser_root/.omp-playwright-version"
+        if [ ! -x "$HOME/.local/bin/google-chrome" ] ||
+          [ ! -f "$marker" ] ||
+          [ "$(cat "$marker")" != "$playwright_version" ]; then
+          PLAYWRIGHT_BROWSERS_PATH="$browser_root" \
+            npx --yes "playwright@$playwright_version" install --with-deps chromium
+          printf '%s\n' "$playwright_version" > "$marker"
+        fi
+        browser=
+        for candidate in "$browser_root"/chromium-*/chrome-linux*/chrome; do
+          if [ -x "$candidate" ]; then
+            browser="$candidate"
+          fi
+        done
+        if [ -z "$browser" ]; then
+          printf 'Playwright Chromium executable not found under %s\n' "$browser_root" >&2
+          exit 1
+        fi
+        for executable in chrome chromium chromium-browser google-chrome google-chrome-stable; do
+          ln -sf "$browser" "$HOME/.local/bin/$executable"
+        done
+      user: "1000"
+      description: "Install an architecture-native Chromium and its browser system libraries"
     - command: |
         set -eu
         ln -sf /home/agent/.local/bin/omp /usr/local/bin/omp

@@ -1,6 +1,6 @@
 # OMP development shell kit
 
-A standalone Docker Sandboxes kit for [Oh My Pi (`omp`)](https://github.com/can1357/oh-my-pi) with Zsh, [fnm](https://github.com/Schniz/fnm), [pnpm](https://pnpm.io/), and repository-aware Node.js setup.
+A standalone Docker Sandboxes kit for [Oh My Pi (`omp`)](https://github.com/can1357/oh-my-pi) with Zsh, [fnm](https://github.com/Schniz/fnm), [pnpm](https://pnpm.io/), architecture-native Chromium, and repository-aware Node.js setup.
 
 ## What it does
 
@@ -11,6 +11,7 @@ During sandbox creation, the kit:
 - installs Zsh and makes it the `agent` user's login shell;
 - installs the native compilation toolchain from Ubuntu's `build-essential` package;
 - installs fnm for the `agent` user;
+- installs Playwright's Chromium build and browser system libraries for the sandbox architecture;
 - exposes OMP and fnm on the sandbox-wide `PATH`;
 - maps the `anthropic` and `sonarqube` sandbox secrets to proxy-managed `ANTHROPIC_API_KEY` and `SONARQUBE_TOKEN` environment variables;
 - initializes fnm from `~/.zshrc`.
@@ -22,7 +23,7 @@ At sandbox startup, fnm detects the repository's requested Node.js version and i
 - `package.json#engines.node`;
 - version files in parent directories.
 
-It installs pnpm plus the TypeScript and ESLint language servers once per selected Node.js version, then links the selected runtime and tools into the `agent` user's `~/.local/bin`. OMP automatically enables ESLint when the repository root contains an ESLint configuration file.
+It installs pnpm plus the TypeScript and ESLint language servers once per selected Node.js version. A pinned Playwright release installs an architecture-native Chromium build once per sandbox, then exposes it as `chrome`, `chromium`, and `google-chrome` in the agent's `PATH`. OMP automatically enables ESLint when the repository root contains an ESLint configuration file.
 
 If fnm cannot select or install the repository's requested version, the setup installs and uses the latest Node.js LTS release.
 
@@ -65,7 +66,7 @@ The mixin-style `requires.agent: pi` dependency is no longer needed: `spec.yaml`
 [`bin/omp-sbx`](bin/omp-sbx) wraps the full per-project lifecycle. Run it from a repository to:
 
 1. create or reuse a sandbox named `omp-<repository>`;
-2. seed a newly created sandbox with the host's `~/.omp` configuration;
+2. seed a newly created sandbox with the host's portable `~/.omp/agent` state;
 3. copy the version-controlled OMP skills into a newly created sandbox;
 4. update OMP and its installed plugins;
 5. attach to OMP and forward any supplied OMP arguments.
@@ -90,9 +91,11 @@ omp-sbx --continue
 omp-sbx --resume
 ```
 
-The launcher copies the host's `~/.omp` directory into `/home/agent/.omp` only
-when it creates a sandbox. Later runs preserve the sandbox's own sessions.
-Removing the named sandbox with `sbx rm` also removes those sessions.
+The launcher copies the host's `~/.omp/agent` directory into
+`/home/agent/.omp/agent` only when it creates a sandbox. Host-specific caches,
+native binaries, browser downloads, and live daemon sockets stay on the host.
+Later runs preserve the sandbox's own sessions. Removing the named sandbox with
+`sbx rm` also removes those sessions.
 
 ### Skills
 
@@ -129,7 +132,7 @@ The sandbox receives proxy-managed sentinel values rather than the real credenti
 The kit allows the domains needed for:
 
 - Ubuntu and Docker APT metadata;
-- the OMP, fnm, and pnpm installers plus GitHub release assets and the npm registry;
+- the OMP, fnm, pnpm, and Playwright installers plus their release assets;
 - Node.js distributions from `nodejs.org`;
 - OpenAI/Codex and Anthropic model endpoints.
 
@@ -147,8 +150,8 @@ sbx kit validate .
 
 ## Lifecycle
 
-- `commands.install` installs OMP, Zsh, and fnm during sandbox creation.
-- `commands.initFiles` writes one compact setup command with the workspace path.
-- `commands.startup` selects the repository's Node.js version, falls back to the latest Node.js LTS release when needed, and provisions pnpm plus the TypeScript and ESLint language servers.
+- `commands.install` installs OMP, Zsh, fnm, and a pinned architecture-native Chromium build with Playwright's browser dependencies during sandbox creation.
+- `commands.initFiles` writes the repository-aware Node.js setup command.
+- `commands.startup` selects the repository's Node.js version and provisions its pnpm and language-server tools.
 
 All installation steps are idempotent so sandbox startup and recreation can safely repeat them.
