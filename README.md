@@ -22,7 +22,7 @@ At sandbox startup, fnm detects the repository's requested Node.js version and i
 - `package.json#engines.node`;
 - version files in parent directories.
 
-It installs pnpm and the TypeScript language server once per selected Node.js version, then links the selected runtime and tools into the `agent` user's `~/.local/bin`.
+It installs pnpm plus the TypeScript and ESLint language servers once per selected Node.js version, then links the selected runtime and tools into the `agent` user's `~/.local/bin`. OMP automatically enables ESLint when the repository root contains an ESLint configuration file.
 
 If fnm cannot select or install the repository's requested version, the setup installs and uses the latest Node.js LTS release.
 
@@ -149,6 +149,6 @@ sbx kit validate .
 
 - `commands.install` installs OMP, Zsh, and fnm during sandbox creation.
 - `commands.initFiles` writes one compact setup command with the workspace path.
-- `commands.startup` selects the repository's Node.js version, falls back to the latest Node.js LTS release when needed, and provisions pnpm and the TypeScript language server.
+- `commands.startup` selects the repository's Node.js version, falls back to the latest Node.js LTS release when needed, and provisions pnpm plus the TypeScript and ESLint language servers.
 
 All installation steps are idempotent so sandbox startup and recreation can safely repeat them.

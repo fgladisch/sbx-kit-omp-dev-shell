@@ -113,10 +113,13 @@ commands:
           fnm install --lts --use
         fi
         runtime_bin=$(dirname "$(readlink -f "$(command -v node)")")
-        if [ ! -x "$runtime_bin/pnpm" ] || [ ! -x "$runtime_bin/typescript-language-server" ]; then
-          npm install --global --prefix "$(dirname "$runtime_bin")" pnpm typescript-language-server typescript
+        if [ ! -x "$runtime_bin/pnpm" ] ||
+          [ ! -x "$runtime_bin/typescript-language-server" ] ||
+          [ ! -x "$runtime_bin/vscode-eslint-language-server" ]; then
+          npm install --global --prefix "$(dirname "$runtime_bin")" \
+            pnpm typescript-language-server typescript @t1ckbase/vscode-langservers-extracted@2.0.2
         fi
-        for executable in node npm npx corepack pnpm typescript-language-server; do
+        for executable in node npm npx corepack pnpm typescript-language-server vscode-eslint-language-server; do
           ln -sf "$runtime_bin/$executable" "$HOME/.local/bin/$executable"
         done
       mode: "0755"
