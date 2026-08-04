@@ -109,7 +109,9 @@ commands:
         set -eu
         cd "${WORKDIR}"
         eval "$(fnm env --version-file-strategy=recursive --resolve-engines --shell bash)"
-        fnm use --install-if-missing
+        if ! fnm use --install-if-missing; then
+          fnm install --lts --use
+        fi
         runtime_bin=$(dirname "$(readlink -f "$(command -v node)")")
         if [ ! -x "$runtime_bin/pnpm" ] || [ ! -x "$runtime_bin/typescript-language-server" ]; then
           npm install --global --prefix "$(dirname "$runtime_bin")" pnpm typescript-language-server typescript

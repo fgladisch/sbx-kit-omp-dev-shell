@@ -24,9 +24,9 @@ At sandbox startup, fnm detects the repository's requested Node.js version and i
 
 It installs pnpm and the TypeScript language server once per selected Node.js version, then links the selected runtime and tools into the `agent` user's `~/.local/bin`.
 
-The repository must declare a Node.js version through one of these mechanisms. Sandbox startup fails when fnm cannot resolve a version.
+If fnm cannot select or install the repository's requested version, the setup installs and uses the latest Node.js LTS release.
 
-The selected fnm runtime becomes the `agent` user's Node.js default, so OMP tool calls and non-interactive commands use the repository version instead of the base image's system Node.js.
+The selected or fallback fnm runtime becomes the `agent` user's Node.js default, so OMP tool calls and non-interactive commands use it instead of the base image's system Node.js.
 
 ## Allow the kit publisher
 
@@ -149,6 +149,6 @@ sbx kit validate .
 
 - `commands.install` installs OMP, Zsh, and fnm during sandbox creation.
 - `commands.initFiles` writes one compact setup command with the workspace path.
-- `commands.startup` selects the repository's Node.js version and provisions pnpm and the TypeScript language server.
+- `commands.startup` selects the repository's Node.js version, falls back to the latest Node.js LTS release when needed, and provisions pnpm and the TypeScript language server.
 
 All installation steps are idempotent so sandbox startup and recreation can safely repeat them.
