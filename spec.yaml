@@ -60,7 +60,8 @@ credentials:
 
 commands:
   install:
-    - command: |
+    - description: "Install the Oh My Pi coding agent"
+      command: |
         set -eu
         if [ ! -x "$HOME/.local/bin/omp" ]; then
           installer=$(mktemp)
@@ -69,8 +70,8 @@ commands:
           sh "$installer" --binary
         fi
       user: "1000"
-      description: "Install the Oh My Pi coding agent"
-    - command: |
+    - description: "Install the native build toolchain and zsh, then set the agent user's login shell"
+      command: |
         set -eu
         export DEBIAN_FRONTEND=noninteractive
         if ! command -v zsh >/dev/null 2>&1 || ! dpkg-query -W build-essential >/dev/null 2>&1; then
@@ -80,8 +81,8 @@ commands:
         fi
         usermod --shell /bin/zsh agent
       user: "0"
-      description: "Install the native build toolchain and zsh, then set the agent user's login shell"
-    - command: |
+    - description: "Install fnm for the agent user"
+      command: |
         set -eu
         if [ ! -x "$HOME/.local/share/fnm/fnm" ]; then
           installer=$(mktemp)
@@ -90,22 +91,16 @@ commands:
           bash "$installer" --skip-shell
         fi
       user: "1000"
-      description: "Install fnm for the agent user"
-    - command: |
+    - description: "Install an architecture-native Chromium and its browser system libraries"
+      command: |
         set -eu
         fnm="$HOME/.local/share/fnm/fnm"
-        eval "$("$fnm" env --version-file-strategy=recursive --resolve-engines --shell bash)"
+        eval "$("$fnm" env --shell bash)"
         "$fnm" install --lts --use
         playwright_version=1.62.1
         browser_root="$HOME/.cache/ms-playwright"
-        marker="$browser_root/.omp-playwright-version"
-        if [ ! -x "$HOME/.local/bin/google-chrome" ] ||
-          [ ! -f "$marker" ] ||
-          [ "$(cat "$marker")" != "$playwright_version" ]; then
-          PLAYWRIGHT_BROWSERS_PATH="$browser_root" \
-            npx --yes "playwright@$playwright_version" install --with-deps chromium
-          printf '%s\n' "$playwright_version" > "$marker"
-        fi
+        PLAYWRIGHT_BROWSERS_PATH="$browser_root" \
+          npx --yes "playwright@$playwright_version" install --with-deps chromium
         browser=
         for candidate in "$browser_root"/chromium-*/chrome-linux*/chrome; do
           if [ -x "$candidate" ]; then
@@ -120,25 +115,28 @@ commands:
           ln -sf "$browser" "$HOME/.local/bin/$executable"
         done
       user: "1000"
-      description: "Install an architecture-native Chromium and its browser system libraries"
-    - command: |
+    - description: "Expose omp and fnm on the sandbox PATH"
+      command: |
         set -eu
         ln -sf /home/agent/.local/bin/omp /usr/local/bin/omp
         ln -sf /home/agent/.local/share/fnm/fnm /usr/local/bin/fnm
       user: "0"
-      description: "Expose omp and fnm on the sandbox PATH"
-    - command: |
+    - description: "Activate fnm in interactive zsh shells"
+      command: |
         set -eu
         init='eval "$(fnm env --use-on-cd --version-file-strategy=recursive --resolve-engines --shell zsh)"'
         touch "$HOME/.zshrc"
         grep -Fqx "$init" "$HOME/.zshrc" || printf '\n%s\n' "$init" >> "$HOME/.zshrc"
       user: "1000"
-      description: "Activate fnm in interactive zsh shells"
   initFiles:
-    - path: /home/agent/.local/bin/setup-project-node
+    - description: "Create the repository-aware Node.js setup command"
+      path: /home/agent/.local/bin/setup-project-node
       content: |
         #!/bin/bash
         set -eu
+        mkdir -p "$HOME/.cache"
+        exec 9>"$HOME/.cache/setup-project-node.lock"
+        flock 9
         cd "${WORKDIR}"
         eval "$(fnm env --version-file-strategy=recursive --resolve-engines --shell bash)"
         if ! fnm use --install-if-missing; then
@@ -155,8 +153,27 @@ commands:
           ln -sf "$runtime_bin/$executable" "$HOME/.local/bin/$executable"
         done
       mode: "0755"
-      description: "Create the repository-aware Node.js setup command"
+    - description: "Expose a TypeScript LSP bootstrap before Node.js setup completes"
+      path: /home/agent/.local/bin/typescript-language-server
+      content: |
+        #!/bin/bash
+        set -eu
+        executable=$(basename "$0")
+        /home/agent/.local/bin/setup-project-node
+        exec "$HOME/.local/bin/$executable" "$@"
+      mode: "0755"
+      onlyIfMissing: true
+    - description: "Expose an ESLint LSP bootstrap before Node.js setup completes"
+      path: /home/agent/.local/bin/vscode-eslint-language-server
+      content: |
+        #!/bin/bash
+        set -eu
+        executable=$(basename "$0")
+        /home/agent/.local/bin/setup-project-node
+        exec "$HOME/.local/bin/$executable" "$@"
+      mode: "0755"
+      onlyIfMissing: true
   startup:
-    - command: [/home/agent/.local/bin/setup-project-node]
+    - description: "Select the repository's Node.js version and install its Node.js tooling"
+      command: [/home/agent/.local/bin/setup-project-node]
       user: "1000"
-      description: "Select the repository's Node.js version and install its Node.js tooling"

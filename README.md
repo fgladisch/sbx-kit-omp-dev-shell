@@ -151,7 +151,7 @@ sbx kit validate .
 ## Lifecycle
 
 - `commands.install` installs OMP, Zsh, fnm, and a pinned architecture-native Chromium build with Playwright's browser dependencies during sandbox creation.
-- `commands.initFiles` writes the repository-aware Node.js setup command.
-- `commands.startup` selects the repository's Node.js version and provisions its pnpm and language-server tools.
+- `commands.initFiles` writes the repository-aware Node.js setup command and executable LSP bootstraps, making both server commands discoverable before OMP starts.
+- `commands.startup` selects the repository's Node.js version and provisions its pnpm and language-server tools. A bootstrap invocation shares the locked setup path if OMP launches a server before provisioning finishes.
 
 All installation steps are idempotent so sandbox startup and recreation can safely repeat them.
