@@ -43,23 +43,11 @@ The exact array is an example based on the default Docker sources. Include any a
 
 ## Usage
 
-The kit is standalone; do not compose it with the upstream Pi kit:
-
 ```bash
 sbx run \
   --kit "git+https://github.com/fgladisch/sbx-kit-omp-dev-shell.git" \
   omp "$PWD"
 ```
-
-For reproducible sandbox configuration, pin the kit to a full commit SHA:
-
-```bash
-sbx run \
-  --kit "git+https://github.com/fgladisch/sbx-kit-omp-dev-shell.git#ref=<kit-commit>" \
-  omp "$PWD"
-```
-
-The mixin-style `requires.agent: pi` dependency is no longer needed: `spec.yaml` now supplies the `shell-docker` sandbox image, installs OMP, and launches `omp` directly.
 
 ### Launcher
 
