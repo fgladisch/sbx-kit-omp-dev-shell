@@ -13,7 +13,7 @@ During sandbox creation, the kit:
 - installs fnm for the `agent` user;
 - installs Playwright's Chromium build and browser system libraries for the sandbox architecture;
 - exposes OMP and fnm on the sandbox-wide `PATH`;
-- maps the `anthropic` and `sonarqube` sandbox secrets to proxy-managed `ANTHROPIC_API_KEY` and `SONARQUBE_TOKEN` environment variables;
+- maps the `anthropic`, `cortecs`, and `sonarqube` sandbox secrets to proxy-managed `ANTHROPIC_API_KEY`, `CORTECS_API_KEY`, and `SONARQUBE_TOKEN` environment variables;
 - initializes fnm from `~/.zshrc`.
 
 At sandbox startup, fnm detects the repository's requested Node.js version and installs it when necessary. Detection supports:
@@ -106,14 +106,15 @@ unchanged on later launches.
 
 ## Credentials
 
-Store both credentials globally before creating a sandbox:
+Store all three credentials globally before creating a sandbox:
 
 ```bash
 sbx secret set -g anthropic
+sbx secret set -g cortecs
 sbx secret set -g sonarqube
 ```
 
-The sandbox receives proxy-managed sentinel values rather than the real credentials. The host-side proxy replaces them in requests to the configured Anthropic and SonarCloud API endpoints.
+The sandbox receives proxy-managed sentinel values rather than the real credentials. The host-side proxy replaces them in requests to the configured Anthropic, Cortecs, and SonarCloud API endpoints.
 
 ## Network access
 
@@ -122,7 +123,7 @@ The kit allows the domains needed for:
 - Ubuntu and Docker APT metadata;
 - the OMP, fnm, pnpm, and Playwright installers plus their release assets;
 - Node.js distributions from `nodejs.org`;
-- OpenAI/Codex and Anthropic model endpoints.
+- OpenAI/Codex, Anthropic, and Cortecs model endpoints.
 
 Review `caps.network.allow` in [`spec.yaml`](spec.yaml) before use if your environment requires a narrower egress policy.
 

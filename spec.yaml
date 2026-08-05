@@ -36,6 +36,7 @@ caps:
       - console.anthropic.com
       - claude.ai
       - api.sonarcloud.io
+      - api.cortecs.ai
 
 credentials:
   - service: anthropic
@@ -49,6 +50,14 @@ credentials:
         - domain: console.anthropic.com
           header: x-api-key
           format: "%s"
+  - service: cortecs
+    apiKey:
+      name: CORTECS_API_KEY
+      proxyManaged: true
+      inject:
+        - domain: api.cortecs.ai
+          header: Authorization
+          format: "Bearer %s"
   - service: sonarqube
     apiKey:
       name: SONARQUBE_TOKEN
