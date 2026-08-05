@@ -109,7 +109,8 @@ commands:
         playwright_version=1.62.1
         browser_root="$HOME/.cache/ms-playwright"
         PLAYWRIGHT_BROWSERS_PATH="$browser_root" \
-          npx --yes "playwright@$playwright_version" install --with-deps chromium
+          npx --yes "playwright@$playwright_version" \
+          install --with-deps --no-shell chromium
         browser=
         for candidate in "$browser_root"/chromium-*/chrome-linux*/chrome; do
           if [ -x "$candidate" ]; then
@@ -120,9 +121,7 @@ commands:
           printf 'Playwright Chromium executable not found under %s\n' "$browser_root" >&2
           exit 1
         fi
-        for executable in chrome chromium chromium-browser google-chrome google-chrome-stable; do
-          ln -sf "$browser" "$HOME/.local/bin/$executable"
-        done
+        ln -sf "$browser" "$HOME/.local/bin/chromium"
       user: "1000"
     - description: "Expose omp and fnm on the sandbox PATH"
       command: |

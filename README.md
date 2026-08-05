@@ -23,7 +23,7 @@ At sandbox startup, fnm detects the repository's requested Node.js version and i
 - `package.json#engines.node`;
 - version files in parent directories.
 
-It installs pnpm plus the TypeScript and ESLint language servers once per selected Node.js version. A pinned Playwright release installs an architecture-native Chromium build once per sandbox, then exposes it as `chrome`, `chromium`, and `google-chrome` in the agent's `PATH`. OMP automatically enables ESLint when the repository root contains an ESLint configuration file.
+It installs pnpm plus the TypeScript and ESLint language servers once per selected Node.js version. A pinned Playwright release installs an architecture-native Chromium build once per sandbox, then exposes it as `chromium` in the agent's `PATH`. OMP automatically enables ESLint when the repository root contains an ESLint configuration file.
 
 If fnm cannot select or install the repository's requested version, the setup installs and uses the latest Node.js LTS release.
 
