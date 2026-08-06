@@ -7,7 +7,7 @@ omp_kit="${OMP_KIT:-git+https://github.com/fgladisch/sbx-kit-omp-dev-shell.git}"
 skills_dir="${OMP_SKILLS_DIR:-${HOME}/code/omp-skills/skills}"
 
 if ! sbx ls -q | grep -Fxq "$name"; then
-  sbx run -d \
+  sbx create \
     --name "$name" \
     --kit "$omp_kit" \
     omp "$PWD"
