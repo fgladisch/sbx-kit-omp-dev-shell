@@ -6,7 +6,21 @@ name="omp-$(basename "$PWD")"
 omp_kit="${OMP_KIT:-git+https://github.com/fgladisch/sbx-kit-omp-dev-shell.git}"
 skills_dir="${OMP_SKILLS_DIR:-${HOME}/code/omp-skills/skills}"
 
-if ! sbx ls -q | grep -Fxq "$name"; then
+sandbox_names=""
+if ! sandbox_names="$(sbx ls -q)"; then
+  echo "ERROR: failed to list sandboxes; refusing to create '$name'." >&2
+  exit 1
+fi
+
+sandbox_exists=false
+while IFS= read -r sandbox_name; do
+  if [[ "$sandbox_name" == "$name" ]]; then
+    sandbox_exists=true
+    break
+  fi
+done <<< "$sandbox_names"
+
+if [[ "$sandbox_exists" == false ]]; then
   sbx create \
     --name "$name" \
     --kit "$omp_kit" \
