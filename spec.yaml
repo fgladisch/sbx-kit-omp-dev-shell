@@ -1,4 +1,4 @@
-schemaVersion: "1"
+schemaVersion: "2"
 kind: sandbox
 name: omp
 displayName: OMP development shell
@@ -6,12 +6,14 @@ description: "Runs Oh My Pi with zsh, fnm, and repository-aware Node.js setup"
 
 sandbox:
   image: "docker/sandbox-templates:shell-docker"
-  aiFilename: AGENTS.md
-  entrypoint:
-    run: [omp]
-    args: ["--approval-mode=yolo"]
+  entrypoint: [omp]
+  command:
+    default: ["--approval-mode=yolo"]
 
-caps:
+agentInstructions:
+  filename: AGENTS.md
+
+permissions:
   network:
     allow:
       - archive.ubuntu.com
@@ -67,7 +69,7 @@ credentials:
           header: Authorization
           format: "Bearer %s"
 
-commands:
+setup:
   install:
     - description: "Install the Oh My Pi coding agent"
       command: |
@@ -136,7 +138,7 @@ commands:
         touch "$HOME/.zshrc"
         grep -Fqx "$init" "$HOME/.zshrc" || printf '\n%s\n' "$init" >> "$HOME/.zshrc"
       user: "1000"
-  initFiles:
+  files:
     - description: "Create the repository-aware Node.js setup command"
       path: /home/agent/.local/bin/setup-project-node
       content: |

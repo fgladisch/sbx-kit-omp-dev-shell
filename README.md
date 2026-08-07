@@ -114,6 +114,31 @@ sbx secret set -g cortecs
 sbx secret set -g sonarqube
 ```
 
+Schema v2 third-party kits also require credential bindings. Before using the
+non-interactive launcher, merge these approvals into
+`~/.config/sbx/credentials.yaml` without removing existing bindings:
+
+```yaml
+bindings:
+  anthropic:
+    apiKey:
+      domains:
+        - api.anthropic.com
+        - console.anthropic.com
+  cortecs:
+    apiKey:
+      domains:
+        - api.cortecs.ai
+  sonarqube:
+    apiKey:
+      domains:
+        - api.sonarcloud.io
+```
+
+Alternatively, run the kit interactively once and approve each requested
+binding at the prompt. Non-interactive `sbx create` runs with unbound
+credentials withheld.
+
 The sandbox receives proxy-managed sentinel values rather than the real credentials. The host-side proxy replaces them in requests to the configured Anthropic, Cortecs, and SonarCloud API endpoints.
 
 ## Network access
@@ -125,11 +150,11 @@ The kit allows the domains needed for:
 - Node.js distributions from `nodejs.org`;
 - OpenAI/Codex, Anthropic, and Cortecs model endpoints.
 
-Review `caps.network.allow` in [`spec.yaml`](spec.yaml) before use if your environment requires a narrower egress policy.
+Review `permissions.network.allow` in [`spec.yaml`](spec.yaml) before use if your environment requires a narrower egress policy.
 
 ## Compatibility
 
-The kit uses `schemaVersion: "1"` with the current `kind: sandbox`, `sandbox`, and `caps.network.allow` fields. It validates with Docker Sandboxes `v0.37.1`.
+The kit uses `schemaVersion: "2"` with the current `kind: sandbox`, `sandbox`, `agentInstructions`, `permissions`, and `setup` fields. It validates with Docker Sandboxes `v0.38.0`.
 
 Validate it locally with:
 
@@ -139,8 +164,8 @@ sbx kit validate .
 
 ## Lifecycle
 
-- `commands.install` installs OMP, Zsh, fnm, and a pinned architecture-native Chromium build with Playwright's browser dependencies during sandbox creation.
-- `commands.initFiles` writes the repository-aware Node.js setup command and executable LSP bootstraps, making both server commands discoverable before OMP starts.
-- `commands.startup` selects the repository's Node.js version and provisions its pnpm and language-server tools. A bootstrap invocation shares the locked setup path if OMP launches a server before provisioning finishes.
+- `setup.install` installs OMP, Zsh, fnm, and a pinned architecture-native Chromium build with Playwright's browser dependencies during sandbox creation.
+- `setup.files` writes the repository-aware Node.js setup command and executable LSP bootstraps, making both server commands discoverable before OMP starts.
+- `setup.startup` selects the repository's Node.js version and provisions its pnpm and language-server tools. A bootstrap invocation shares the locked setup path if OMP launches a server before provisioning finishes.
 
 All installation steps are idempotent so sandbox startup and recreation can safely repeat them.
