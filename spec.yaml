@@ -38,6 +38,7 @@ permissions:
       - console.anthropic.com
       - claude.ai
       - api.sonarcloud.io
+      - eu.api.smith.langchain.com
       - api.cortecs.ai
 
 credentials:
@@ -68,6 +69,14 @@ credentials:
         - domain: api.sonarcloud.io
           header: Authorization
           format: "Bearer %s"
+  - service: langsmith
+    apiKey:
+      name: LANGSMITH_API_KEY
+      proxyManaged: true
+      inject:
+        - domain: eu.api.smith.langchain.com
+          header: X-Api-Key
+          format: "%s"
 
 setup:
   install:
