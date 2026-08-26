@@ -28,7 +28,7 @@ if [[ "$sandbox_exists" == false ]]; then
     omp "$PWD"
   sbx exec "$name" -- mkdir -p /home/agent/.omp
   sbx cp "$HOME/.omp/agent" "$name:/home/agent/.omp"
-  sbx exec "$name" -- rm -rf /home/agent/.omp/agent/commands
+  sbx exec -u root "$name" -- rm -rf /home/agent/.omp/agent/commands
   sbx cp "$commands_dir" "$name:/home/agent/.omp/agent/commands"
   sbx exec -u root "$name" -- chown -R 1000:1000 /home/agent/.omp/agent
   sbx exec "$name" -- mkdir -p /home/agent/.agents
