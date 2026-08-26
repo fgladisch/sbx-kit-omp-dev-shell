@@ -55,7 +55,7 @@ sbx run \
 
 1. create or reuse a sandbox named `omp-<repository>`;
 2. seed a newly created sandbox with the host's portable `~/.omp/agent` state;
-3. copy the version-controlled OMP skills into a newly created sandbox;
+3. copy the version-controlled OMP skills and commands into a newly created sandbox;
 4. update OMP and its installed plugins;
 5. attach to OMP and forward any supplied OMP arguments.
 
@@ -103,6 +103,17 @@ rm -f "$HOME/.omp/agent/skills"
 When creating a sandbox, the launcher copies the source directory to
 `/home/agent/.agents/skills`. Existing sandboxes and their skills are left
 unchanged on later launches.
+
+### Commands
+
+Keep shared commands in a dedicated Git repository. The launcher copies
+`~/code/omp-skills/commands` by default; override the source directory with
+`OMP_COMMANDS_DIR`.
+
+When creating a sandbox, the launcher replaces the copied host
+`~/.omp/agent/commands` entry, including a symlink, with the source directory at
+`/home/agent/.omp/agent/commands`. Existing sandboxes and their commands are
+left unchanged on later launches.
 
 ## Credentials
 
