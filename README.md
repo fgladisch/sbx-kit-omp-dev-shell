@@ -6,14 +6,13 @@ A standalone Docker Sandboxes kit for [Oh My Pi (`omp`)](https://github.com/can1
 
 During sandbox creation, the kit:
 
-- installs the latest OMP prebuilt release for the sandbox architecture;
-- configures OMP as the sandbox entrypoint with tool approvals delegated to the sandbox boundary;
-- installs Zsh and makes it the `agent` user's login shell;
-- installs the native compilation toolchain from Ubuntu's `build-essential` package;
-- installs fnm for the `agent` user;
-- installs Playwright's Chromium build and browser system libraries for the sandbox architecture;
-- exposes OMP and fnm on the sandbox-wide `PATH`;
-- maps the `anthropic`, `cortecs`, and `sonarqube` sandbox secrets to proxy-managed `ANTHROPIC_API_KEY`, `CORTECS_API_KEY`, and `SONARQUBE_TOKEN` environment variables;
+- installs the latest OMP prebuilt release available for the sandbox architecture;
+- configures OMP as the sandbox entrypoint with `--approval-mode=yolo`;
+- loads the repository's `AGENTS.md` through the kit's `agentInstructions`;
+- installs Zsh, Ubuntu's `build-essential` toolchain, and fnm;
+- installs Playwright's pinned, architecture-native Chromium build and its system libraries;
+- exposes OMP, fnm, Chromium, pnpm, and the installed language servers on the sandbox `PATH`;
+- binds the `cortecs`, `sipgate_os`, `sonarqube`, and `langsmith` sandbox secrets to proxy-managed `CORTECS_API_KEY`, `SIPGATE_OS_API_KEY`, `SONARQUBE_TOKEN`, and `LANGSMITH_API_KEY` environment variables;
 - initializes fnm from `~/.zshrc`.
 
 At sandbox startup, fnm detects the repository's requested Node.js version and installs it when necessary. Detection supports:
@@ -53,11 +52,12 @@ sbx run \
 
 [`bin/omp-sbx`](bin/omp-sbx) wraps the full per-project lifecycle. Run it from a repository to:
 
-1. create or reuse a sandbox named `omp-<repository>`;
-2. seed a newly created sandbox with the host's portable `~/.omp/agent` state;
-3. copy the version-controlled OMP skills and commands into a newly created sandbox;
-4. update OMP and its installed plugins;
-5. attach to OMP and forward any supplied OMP arguments.
+1. derive the sandbox name `omp-<repository>` from the current directory name;
+2. create the sandbox when necessary, with the current directory mounted read-write at its absolute host path;
+3. copy the host's complete `~/.omp/agent` directory into a newly created sandbox;
+4. replace the copied commands and add the shared skills configured by `OMP_COMMANDS_DIR` and `OMP_SKILLS_DIR`;
+5. update OMP and its installed plugins on every launch;
+6. attach to OMP and forward every supplied OMP argument.
 
 Link it into `~/bin`:
 
@@ -79,11 +79,19 @@ omp-sbx --continue
 omp-sbx --resume
 ```
 
-The launcher copies the host's `~/.omp/agent` directory into
-`/home/agent/.omp/agent` only when it creates a sandbox. Host-specific caches,
-native binaries, browser downloads, and live daemon sockets stay on the host.
-Later runs preserve the sandbox's own sessions. Removing the named sandbox with
-`sbx rm` also removes those sessions.
+The launcher uses the published Git kit by default. Set `OMP_KIT` to a local
+directory or another supported kit reference when testing a different build:
+
+```bash
+OMP_KIT=/path/to/sbx-kit-omp-dev-shell omp-sbx
+```
+
+The initial copy places the host's full `~/.omp/agent` directory at
+`/home/agent/.omp/agent`, then replaces its `commands` entry with the configured
+commands directory. Existing sandboxes keep independent configuration,
+databases, sessions, commands, and skills. Changes made to the corresponding
+host files are not synchronized on later launches. Removing the named sandbox
+with `sbx rm` also removes that sandbox-local state.
 
 ### Skills
 
@@ -117,12 +125,13 @@ left unchanged on later launches.
 
 ## Credentials
 
-Store all three credentials globally before creating a sandbox:
+Store the four credentials used by the kit globally before creating a sandbox:
 
 ```bash
-sbx secret set -g anthropic
 sbx secret set -g cortecs
+sbx secret set -g sipgate_os
 sbx secret set -g sonarqube
+sbx secret set -g langsmith
 ```
 
 Schema v2 third-party kits also require credential bindings. Before using the
@@ -131,41 +140,50 @@ non-interactive launcher, merge these approvals into
 
 ```yaml
 bindings:
-  anthropic:
-    apiKey:
-      domains:
-        - api.anthropic.com
-        - console.anthropic.com
   cortecs:
     apiKey:
       domains:
         - api.cortecs.ai
+  sipgate_os:
+    apiKey:
+      domains:
+        - coding-proxy.nautilus-tooling01.live.ix01.sipgate.net
   sonarqube:
     apiKey:
       domains:
         - api.sonarcloud.io
+  langsmith:
+    apiKey:
+      domains:
+        - eu.api.smith.langchain.com
 ```
 
 Alternatively, run the kit interactively once and approve each requested
 binding at the prompt. Non-interactive `sbx create` runs with unbound
 credentials withheld.
 
-The sandbox receives proxy-managed sentinel values rather than the real credentials. The host-side proxy replaces them in requests to the configured Anthropic, Cortecs, and SonarCloud API endpoints.
+The sandbox receives proxy-managed sentinel values rather than the real
+credentials. The host-side proxy injects bearer tokens for Cortecs, Sipgate,
+and SonarCloud requests, and the `X-Api-Key` header for LangSmith requests.
 
 ## Network access
 
 The kit allows the domains needed for:
 
 - Ubuntu and Docker APT metadata;
-- the OMP, fnm, pnpm, and Playwright installers plus their release assets;
-- Node.js distributions from `nodejs.org`;
-- OpenAI/Codex, Anthropic, and Cortecs model endpoints.
+- OMP, fnm, Node.js, npm, pnpm, and Playwright installation;
+- GitHub API access and release downloads;
+- OpenAI and Anthropic authentication and model endpoints;
+- Cortecs and Sipgate model endpoints;
+- SonarCloud and LangSmith API access.
 
 Review `permissions.network.allow` in [`spec.yaml`](spec.yaml) before use if your environment requires a narrower egress policy.
 
 ## Compatibility
 
-The kit uses `schemaVersion: "2"` with the current `kind: sandbox`, `sandbox`, `agentInstructions`, `permissions`, and `setup` fields. It validates with Docker Sandboxes `v0.38.0`.
+The kit uses `schemaVersion: "2"` with the current `kind: sandbox`, `sandbox`,
+`agentInstructions`, `permissions`, `credentials`, and `setup` fields. It
+validates with Docker Sandboxes `v0.39.0`.
 
 Validate it locally with:
 
