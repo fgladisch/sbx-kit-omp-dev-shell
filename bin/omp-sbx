@@ -7,6 +7,15 @@ omp_kit="${OMP_KIT:-git+https://github.com/fgladisch/sbx-kit-omp-dev-shell.git}"
 skills_dir="${OMP_SKILLS_DIR:-${HOME}/code/omp-skills/skills}"
 commands_dir="${OMP_COMMANDS_DIR:-${HOME}/code/omp-skills/commands}"
 
+workspaces=("$PWD")
+while [[ "$#" -gt 0 && "$1" != "--" && "$1" != -* ]]; do
+  workspaces+=("$1")
+  shift
+done
+if [[ "${1:-}" == "--" ]]; then
+  shift
+fi
+
 sandbox_names=""
 if ! sandbox_names="$(sbx ls -q)"; then
   echo "ERROR: failed to list sandboxes; refusing to create '$name'." >&2
@@ -25,7 +34,7 @@ if [[ "$sandbox_exists" == false ]]; then
   sbx create \
     --name "$name" \
     "$omp_kit" \
-    "$PWD"
+    "${workspaces[@]}"
   sbx exec "$name" -- mkdir -p /home/agent/.omp
   sbx cp "$HOME/.omp/agent" "$name:/home/agent/.omp"
   sbx exec -u root "$name" -- rm -rf /home/agent/.omp/agent/commands

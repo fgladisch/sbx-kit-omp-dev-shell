@@ -53,11 +53,11 @@ sbx run \
 [`bin/omp-sbx`](bin/omp-sbx) wraps the full per-project lifecycle. Run it from a repository to:
 
 1. derive the sandbox name `omp-<repository>` from the current directory name;
-2. create the sandbox when necessary, with the current directory mounted read-write at its absolute host path;
+2. create the sandbox when necessary, with the current directory as its primary workspace and any additional directories mounted alongside it;
 3. copy the host's complete `~/.omp/agent` directory into a newly created sandbox;
 4. replace the copied commands and add the shared skills configured by `OMP_COMMANDS_DIR` and `OMP_SKILLS_DIR`;
 5. update OMP and its installed plugins on every launch;
-6. attach to OMP and forward every supplied OMP argument.
+6. attach to OMP and forward arguments following `--`, or arguments beginning with `-`, to OMP.
 
 Link it into `~/bin`:
 
@@ -70,6 +70,26 @@ Then launch OMP from any repository:
 ```bash
 omp-sbx
 ```
+
+Pass additional workspace directories before OMP arguments. They are mounted
+read-write at the same absolute paths as on the host. Append `:ro` to mount a
+directory read-only:
+
+```bash
+omp-sbx ../ai-agents-telco-service ../sipgate-app-admin
+omp-sbx ../shared-docs:ro
+```
+
+Use `--` to separate workspace directories from OMP arguments. A leading OMP
+option also ends workspace parsing, so existing option-only calls remain valid:
+
+```bash
+omp-sbx ../shared-docs:ro -- --continue
+```
+
+Additional workspace arguments apply only when the sandbox is first created.
+An existing sandbox keeps its original mounts. Remove it with
+`sbx rm omp-<repository>` before changing the workspace list.
 
 Resume the latest project session with `--continue`, or open OMP's session
 picker with `--resume`:
