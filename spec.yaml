@@ -22,6 +22,7 @@ permissions:
       - download.docker.com
       - fnm.vercel.app
       - omp.sh
+      - herdr.dev
       - api.github.com
       - github.com
       - objects.githubusercontent.com
@@ -88,6 +89,16 @@ setup:
           sh "$installer" --binary
         fi
       user: "1000"
+    - description: "Install the Herdr terminal workspace manager"
+      command: |
+        set -eu
+        if [ ! -x "$HOME/.local/bin/herdr" ]; then
+          installer=$(mktemp)
+          trap 'rm -f "$installer"' EXIT
+          curl -fsSL https://herdr.dev/install.sh -o "$installer"
+          sh "$installer"
+        fi
+      user: "1000"
     - description: "Install the native build toolchain and zsh, then set the agent user's login shell"
       command: |
         set -eu
@@ -132,10 +143,11 @@ setup:
         fi
         ln -sf "$browser" "$HOME/.local/bin/chromium"
       user: "1000"
-    - description: "Expose omp and fnm on the sandbox PATH"
+    - description: "Expose omp, herdr, and fnm on the sandbox PATH"
       command: |
         set -eu
         ln -sf /home/agent/.local/bin/omp /usr/local/bin/omp
+        ln -sf /home/agent/.local/bin/herdr /usr/local/bin/herdr
         ln -sf /home/agent/.local/share/fnm/fnm /usr/local/bin/fnm
       user: "0"
     - description: "Activate fnm in interactive zsh shells"
@@ -146,6 +158,22 @@ setup:
         grep -Fqx "$init" "$HOME/.zshrc" || printf '\n%s\n' "$init" >> "$HOME/.zshrc"
       user: "1000"
   files:
+    - description: "Configure Herdr to start OMP in each new pane"
+      path: /home/agent/.config/herdr/config.toml
+      content: |
+        onboarding = false
+
+        [terminal]
+        default_shell = "/home/agent/.local/bin/herdr-omp-shell"
+        shell_mode = "non_login"
+      mode: "0644"
+    - description: "Start OMP before falling back to an interactive shell"
+      path: /home/agent/.local/bin/herdr-omp-shell
+      content: |
+        #!/bin/bash
+        omp
+        exec /bin/zsh
+      mode: "0755"
     - description: "Create the repository-aware Node.js setup command"
       path: /home/agent/.local/bin/setup-project-node
       content: |

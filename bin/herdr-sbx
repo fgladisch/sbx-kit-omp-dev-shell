@@ -1,0 +1,65 @@
+#!/bin/bash
+
+set -euo pipefail
+
+name="herdr-$(basename "$PWD")"
+script_path="$(realpath "${BASH_SOURCE[0]}")"
+local_kit="$(dirname "$(dirname "$script_path")")"
+default_kit="git+https://github.com/fgladisch/sbx-kit-omp-dev-shell.git"
+if [[ -f "$local_kit/spec.yaml" ]]; then
+  default_kit="$local_kit"
+fi
+omp_kit="${OMP_KIT:-$default_kit}"
+skills_dir="${OMP_SKILLS_DIR:-${HOME}/code/omp-skills/skills}"
+commands_dir="${OMP_COMMANDS_DIR:-${HOME}/code/omp-skills/commands}"
+workspaces=("$PWD")
+while [[ "$#" -gt 0 && "$1" != "--" && "$1" != -* ]]; do
+  workspaces+=("$1")
+  shift
+done
+if [[ "${1:-}" == "--" ]]; then
+  shift
+fi
+
+sandbox_names=""
+if ! sandbox_names="$(sbx ls -q)"; then
+  echo "ERROR: failed to list sandboxes; refusing to create '$name'." >&2
+  exit 1
+fi
+
+sandbox_exists=false
+while IFS= read -r sandbox_name; do
+  if [[ "$sandbox_name" == "$name" ]]; then
+    sandbox_exists=true
+    break
+  fi
+done <<< "$sandbox_names"
+
+if [[ "$sandbox_exists" == false ]]; then
+  sbx create \
+    --name "$name" \
+    "$omp_kit" \
+    "${workspaces[@]}"
+  sbx exec "$name" -- mkdir -p /home/agent/.omp
+  sbx cp "$HOME/.omp/agent" "$name:/home/agent/.omp"
+  sbx exec -u root "$name" -- rm -rf /home/agent/.omp/agent/commands
+  sbx cp "$commands_dir" "$name:/home/agent/.omp/agent/commands"
+  sbx exec -u root "$name" -- chown -R 1000:1000 /home/agent/.omp/agent
+  sbx exec "$name" -- mkdir -p /home/agent/.agents
+  sbx cp "$skills_dir" "$name:/home/agent/.agents/skills"
+  sbx exec -u root "$name" -- chown -R 1000:1000 /home/agent/.agents/skills
+fi
+
+sbx exec "$name" -- omp update --plugins
+sbx exec "$name" -- herdr integration install omp
+terminal_rows=40
+terminal_columns=120
+if terminal_size="$(stty size 2>/dev/null)" &&
+  [[ "$terminal_size" =~ ^([1-9][0-9]*)[[:space:]]+([1-9][0-9]*)$ ]]; then
+  terminal_rows="${BASH_REMATCH[1]}"
+  terminal_columns="${BASH_REMATCH[2]}"
+fi
+
+exec sbx exec -it -w "$PWD" "$name" -- /bin/bash -c \
+  'stty rows "$1" cols "$2"; shift 2; exec herdr "$@"' \
+  herdr-sbx "$terminal_rows" "$terminal_columns" "$@"

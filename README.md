@@ -1,17 +1,18 @@
 # OMP development shell kit
 
-A standalone Docker Sandboxes kit for [Oh My Pi (`omp`)](https://github.com/can1357/oh-my-pi) with Zsh, [fnm](https://github.com/Schniz/fnm), [pnpm](https://pnpm.io/), architecture-native Chromium, and repository-aware Node.js setup.
+A standalone Docker Sandboxes kit for [Oh My Pi (`omp`)](https://github.com/can1357/oh-my-pi) and [Herdr](https://herdr.dev/) with Zsh, [fnm](https://github.com/Schniz/fnm), [pnpm](https://pnpm.io/), architecture-native Chromium, and repository-aware Node.js setup.
 
 ## What it does
 
 During sandbox creation, the kit:
 
-- installs the latest OMP prebuilt release available for the sandbox architecture;
+- installs the latest OMP and Herdr prebuilt releases available for the sandbox architecture;
 - configures OMP as the sandbox entrypoint with `--approval-mode=yolo`;
+- configures Herdr panes to start OMP automatically;
 - loads the repository's `AGENTS.md` through the kit's `agentInstructions`;
 - installs Zsh, Ubuntu's `build-essential` toolchain, and fnm;
 - installs Playwright's pinned, architecture-native Chromium build and its system libraries;
-- exposes OMP, fnm, Chromium, pnpm, and the installed language servers on the sandbox `PATH`;
+- exposes OMP, Herdr, fnm, Chromium, pnpm, and the installed language servers on the sandbox `PATH`;
 - binds the `cortecs`, `sipgate_os`, `sonarqube`, and `langsmith` sandbox secrets to proxy-managed `CORTECS_API_KEY`, `SIPGATE_OS_API_KEY`, `SONARQUBE_TOKEN`, and `LANGSMITH_API_KEY` environment variables;
 - initializes fnm from `~/.zshrc`.
 
@@ -113,6 +114,36 @@ databases, sessions, commands, and skills. Changes made to the corresponding
 host files are not synchronized on later launches. Removing the named sandbox
 with `sbx rm` also removes that sandbox-local state.
 
+### Herdr launcher
+
+[`bin/herdr-sbx`](bin/herdr-sbx) creates a separate
+`herdr-<repository>` sandbox with the same configuration, skills, commands, and
+multi-folder mounts as `omp-sbx`. It opens Herdr in the current directory, and
+Herdr starts OMP automatically in each new pane without arguments. Arguments
+after `--`, or arguments beginning with `-`, are forwarded to Herdr.
+
+Link it into `~/bin`:
+
+```bash
+ln -s "$(pwd)/bin/herdr-sbx" "$HOME/bin/herdr-sbx"
+```
+
+Launch Herdr from a repository, optionally mounting additional directories:
+
+```bash
+herdr-sbx
+herdr-sbx ../ai-agents-telco-service ../shared-docs:ro
+herdr-sbx ../shared-docs:ro -- --session project
+```
+
+Workspace paths must precede Herdr arguments. Additional workspaces apply only
+when the sandbox is first created. Remove it with
+`sbx rm herdr-<repository>` before changing the workspace list.
+
+When the launcher resolves to a checkout containing `spec.yaml`, it uses that
+local kit so the script and sandbox setup stay in sync. Otherwise it falls back
+to the published Git kit. `OMP_KIT` overrides either default.
+
 ### Skills
 
 Keep shared skills in a dedicated Git repository. The launcher copies
@@ -191,7 +222,7 @@ and SonarCloud requests, and the `X-Api-Key` header for LangSmith requests.
 The kit allows the domains needed for:
 
 - Ubuntu and Docker APT metadata;
-- OMP, fnm, Node.js, npm, pnpm, and Playwright installation;
+- Herdr, OMP, fnm, Node.js, npm, pnpm, and Playwright installation;
 - GitHub API access and release downloads;
 - OpenAI and Anthropic authentication and model endpoints;
 - Cortecs and Sipgate model endpoints;
@@ -213,8 +244,8 @@ sbx kit validate .
 
 ## Lifecycle
 
-- `setup.install` installs OMP, Zsh, fnm, and a pinned architecture-native Chromium build with Playwright's browser dependencies during sandbox creation.
-- `setup.files` writes the repository-aware Node.js setup command and executable LSP bootstraps, making both server commands discoverable before OMP starts.
+- `setup.install` installs OMP, Herdr, Zsh, fnm, and a pinned architecture-native Chromium build with Playwright's browser dependencies during sandbox creation.
+- `setup.files` configures Herdr's automatic OMP panes and writes the repository-aware Node.js setup command plus executable LSP bootstraps.
 - `setup.startup` selects the repository's Node.js version and provisions its pnpm and language-server tools. A bootstrap invocation shares the locked setup path if OMP launches a server before provisioning finishes.
 
 All installation steps are idempotent so sandbox startup and recreation can safely repeat them.
