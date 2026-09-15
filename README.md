@@ -44,8 +44,8 @@ The exact array is an example based on the default Docker sources. Include any a
 
 ```bash
 sbx run \
-  --kit "git+https://github.com/fgladisch/sbx-kit-omp-dev-shell.git" \
-  omp "$PWD"
+  "git+https://github.com/fgladisch/sbx-kit-omp-dev-shell.git" \
+  "$PWD"
 ```
 
 ### Launcher

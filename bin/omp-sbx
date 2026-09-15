@@ -24,8 +24,8 @@ done <<< "$sandbox_names"
 if [[ "$sandbox_exists" == false ]]; then
   sbx create \
     --name "$name" \
-    --kit "$omp_kit" \
-    omp "$PWD"
+    "$omp_kit" \
+    "$PWD"
   sbx exec "$name" -- mkdir -p /home/agent/.omp
   sbx cp "$HOME/.omp/agent" "$name:/home/agent/.omp"
   sbx exec -u root "$name" -- rm -rf /home/agent/.omp/agent/commands
