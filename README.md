@@ -13,7 +13,7 @@ During sandbox creation, the kit:
 - installs Zsh, Ubuntu's `build-essential` toolchain, and fnm;
 - installs Playwright's pinned, architecture-native Chromium build and its system libraries;
 - exposes OMP, Herdr, fnm, Chromium, pnpm, and the installed language servers on the sandbox `PATH`;
-- binds the `cortecs`, `sipgate_os`, `sonarqube`, and `langsmith` sandbox secrets to proxy-managed `CORTECS_API_KEY`, `SIPGATE_OS_API_KEY`, `SONARQUBE_TOKEN`, and `LANGSMITH_API_KEY` environment variables;
+- binds the `sipgate_os`, `sonarqube`, and `langsmith` sandbox secrets to proxy-managed `SIPGATE_OS_API_KEY`, `SONARQUBE_TOKEN`, and `LANGSMITH_API_KEY` environment variables;
 - initializes fnm from `~/.zshrc`.
 
 At sandbox startup, fnm detects the repository's requested Node.js version and installs it when necessary. Detection supports:
@@ -176,10 +176,9 @@ left unchanged on later launches.
 
 ## Credentials
 
-Store the four credentials used by the kit globally before creating a sandbox:
+Store the three credentials used by the kit globally before creating a sandbox:
 
 ```bash
-sbx secret set -g cortecs
 sbx secret set -g sipgate_os
 sbx secret set -g sonarqube
 sbx secret set -g langsmith
@@ -191,10 +190,6 @@ non-interactive launcher, merge these approvals into
 
 ```yaml
 bindings:
-  cortecs:
-    apiKey:
-      domains:
-        - api.cortecs.ai
   sipgate_os:
     apiKey:
       domains:
@@ -218,8 +213,8 @@ from creation time. After changing a binding or kit domain, remove and recreate
 the sandbox before retrying the affected service.
 
 The sandbox receives proxy-managed sentinel values rather than the real
-credentials. The host-side proxy injects bearer tokens for Cortecs, Sipgate,
-and SonarCloud requests, and the `X-Api-Key` header for LangSmith requests.
+credentials. The host-side proxy injects bearer tokens for Sipgate and
+SonarCloud requests, and the `X-Api-Key` header for LangSmith requests.
 
 ## Network access
 
@@ -229,7 +224,7 @@ The kit allows the domains needed for:
 - Herdr, OMP, fnm, Node.js, npm, pnpm, and Playwright installation;
 - GitHub API access and release downloads;
 - OpenAI and Anthropic authentication and model endpoints;
-- Cortecs and Sipgate model endpoints;
+- Sipgate model endpoint;
 - SonarCloud and LangSmith API access.
 
 Review `permissions.network.allow` in [`spec.yaml`](spec.yaml) before use if your environment requires a narrower egress policy.
