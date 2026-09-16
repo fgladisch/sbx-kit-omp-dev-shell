@@ -198,7 +198,7 @@ bindings:
   sipgate_os:
     apiKey:
       domains:
-        - coding-proxy.nautilus-tooling01.live.ix01.sipgate.net
+        - coding.sipgate.ai
   sonarqube:
     apiKey:
       domains:
@@ -212,6 +212,10 @@ bindings:
 Alternatively, run the kit interactively once and approve each requested
 binding at the prompt. Non-interactive `sbx create` runs with unbound
 credentials withheld.
+
+Existing sandboxes retain the network policy and credential injection domains
+from creation time. After changing a binding or kit domain, remove and recreate
+the sandbox before retrying the affected service.
 
 The sandbox receives proxy-managed sentinel values rather than the real
 credentials. The host-side proxy injects bearer tokens for Cortecs, Sipgate,

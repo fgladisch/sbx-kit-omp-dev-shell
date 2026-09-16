@@ -41,7 +41,7 @@ permissions:
       - api.sonarcloud.io
       - eu.api.smith.langchain.com
       - api.cortecs.ai
-      - coding-proxy.nautilus-tooling01.live.ix01.sipgate.net
+      - coding.sipgate.ai
 
 credentials:
   - service: cortecs
@@ -57,7 +57,7 @@ credentials:
       name: SIPGATE_OS_API_KEY
       proxyManaged: true
       inject:
-        - domain: coding-proxy.nautilus-tooling01.live.ix01.sipgate.net
+        - domain: coding.sipgate.ai
           header: Authorization
           format: "Bearer %s"
   - service: sonarqube
