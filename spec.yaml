@@ -40,18 +40,9 @@ permissions:
       - claude.ai
       - api.sonarcloud.io
       - eu.api.smith.langchain.com
-      - api.cortecs.ai
       - coding.sipgate.ai
 
 credentials:
-  - service: cortecs
-    apiKey:
-      name: CORTECS_API_KEY
-      proxyManaged: true
-      inject:
-        - domain: api.cortecs.ai
-          header: Authorization
-          format: "Bearer %s"
   - service: sipgate_os
     apiKey:
       name: SIPGATE_OS_API_KEY
