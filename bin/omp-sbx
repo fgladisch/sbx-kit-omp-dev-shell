@@ -7,14 +7,16 @@ omp_kit="${OMP_KIT:-git+https://github.com/fgladisch/sbx-kit-omp-dev-shell.git}"
 skills_dir="${OMP_SKILLS_DIR:-${HOME}/code/omp-skills/skills}"
 commands_dir="${OMP_COMMANDS_DIR:-${HOME}/code/omp-skills/commands}"
 
-workspaces=("$PWD")
-while [[ "$#" -gt 0 && "$1" != "--" && "$1" != -* ]]; do
-  workspaces+=("$1")
-  shift
-done
-if [[ "${1:-}" == "--" ]]; then
-  shift
+# `sbx run` only relays OMP's output when attached to a terminal. Editors that
+# spawn OMP over pipes (ACP) need a plain `sbx exec -i` session instead.
+interactive=false
+if [[ -t 0 && -t 1 ]]; then
+  interactive=true
 fi
+
+# Keep stdio clean for OMP: ACP speaks JSON-RPC over stdin/stdout, so setup
+# commands get no stdin and write to stderr. Only OMP sees the original streams.
+exec 3>&1 4<&0 1>&2 0</dev/null
 
 sandbox_names=""
 if ! sandbox_names="$(sbx ls -q)"; then
@@ -34,7 +36,7 @@ if [[ "$sandbox_exists" == false ]]; then
   sbx create \
     --name "$name" \
     "$omp_kit" \
-    "${workspaces[@]}"
+    "$PWD"
   sbx exec "$name" -- mkdir -p /home/agent/.omp
   sbx cp "$HOME/.omp/agent" "$name:/home/agent/.omp"
   sbx exec -u root "$name" -- rm -rf /home/agent/.omp/agent/commands
@@ -46,4 +48,8 @@ if [[ "$sandbox_exists" == false ]]; then
 fi
 
 sbx exec "$name" -- omp update --plugins
-sbx run --name "$name" -- "$@"
+if [[ "$interactive" == true ]]; then
+  sbx run --name "$name" -- "$@" 0<&4 1>&3 3>&- 4<&-
+else
+  sbx exec -i -w "$PWD" "$name" omp "$@" 0<&4 1>&3 3>&- 4<&-
+fi

@@ -53,11 +53,11 @@ sbx run \
 [`bin/omp-sbx`](bin/omp-sbx) wraps the full per-project lifecycle. Run it from a repository to:
 
 1. derive the sandbox name `omp-<repository>` from the current directory name;
-2. create the sandbox when necessary, with the current directory as its primary workspace and any additional directories mounted alongside it;
+2. create the sandbox when necessary, with the current directory as its workspace;
 3. copy the host's complete `~/.omp/agent` directory into a newly created sandbox;
 4. replace the copied commands and add the shared skills configured by `OMP_COMMANDS_DIR` and `OMP_SKILLS_DIR`;
 5. update OMP and its installed plugins on every launch;
-6. attach to OMP and forward arguments following `--`, or arguments beginning with `-`, to OMP.
+6. attach to OMP and forward every argument to OMP unchanged.
 
 Link it into `~/bin`:
 
@@ -71,25 +71,12 @@ Then launch OMP from any repository:
 omp-sbx
 ```
 
-Pass additional workspace directories before OMP arguments. They are mounted
-read-write at the same absolute paths as on the host. Append `:ro` to mount a
-directory read-only:
-
-```bash
-omp-sbx ../ai-agents-telco-service ../sipgate-app-admin
-omp-sbx ../shared-docs:ro
-```
-
-Use `--` to separate workspace directories from OMP arguments. A leading OMP
-option also ends workspace parsing, so existing option-only calls remain valid:
-
-```bash
-omp-sbx ../shared-docs:ro -- --continue
-```
-
-Additional workspace arguments apply only when the sandbox is first created.
-An existing sandbox keeps its original mounts. Remove it with
-`sbx rm omp-<repository>` before changing the workspace list.
+Every argument is passed to OMP, including subcommands such as `acp`. In a
+terminal the launcher attaches with `sbx run`. When stdin or stdout is not a
+terminal, as when an editor spawns it, it starts OMP with `sbx exec -i` instead,
+because `sbx run` relays no output without a TTY. Setup commands read no stdin
+and write to stderr, so OMP's stdin and stdout carry only the session. That
+keeps stdio-based protocols like ACP intact.
 
 Resume the latest project session with `--continue`, or open OMP's session
 picker with `--resume`:
@@ -97,6 +84,21 @@ picker with `--resume`:
 ```bash
 omp-sbx --continue
 omp-sbx --resume
+```
+
+To run OMP as an ACP agent in Zed, register the launcher as a custom agent
+server in Zed's `settings.json`:
+
+```json
+{
+  "agent_servers": {
+    "omp": {
+      "type": "custom",
+      "command": "omp-sbx",
+      "args": ["acp"]
+    }
+  }
+}
 ```
 
 The launcher uses the published Git kit by default. Set `OMP_KIT` to a local
