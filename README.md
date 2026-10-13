@@ -198,7 +198,7 @@ The kit allows the domains needed for:
 - OpenAI and Anthropic authentication and model endpoints;
 - Sipgate model endpoint;
 - sipgate root CA download;
-- SonarCloud and LangSmith API access.
+- SonarCloud, LangSmith, and datapls API access.
 
 Review `permissions.network.allow` in [`spec.yaml`](spec.yaml) before use if your environment requires a narrower egress policy.
 

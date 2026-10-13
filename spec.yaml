@@ -39,6 +39,7 @@ permissions:
       - eu.api.smith.langchain.com
       - coding.sipgate.ai
       - ca.live.sipgate.net:8443
+      - datapls.nautilus-tooling01.live.ix01.sipgate.net
 
 credentials:
   - service: sipgate_os
