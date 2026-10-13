@@ -38,6 +38,7 @@ permissions:
       - api.sonarcloud.io
       - eu.api.smith.langchain.com
       - coding.sipgate.ai
+      - ca.live.sipgate.net:8443
 
 credentials:
   - service: sipgate_os
@@ -87,6 +88,19 @@ setup:
           rm -rf /var/lib/apt/lists/*
         fi
         usermod --shell /bin/zsh agent
+      user: "0"
+    - description: "Trust the sipgate root CA for internal services such as datapls"
+      command: |
+        set -eu
+        ca=/usr/local/share/ca-certificates/sipgate-root-ca.crt
+        if [ ! -s "$ca" ]; then
+          download=$(mktemp)
+          trap 'rm -f "$download"' EXIT
+          curl -fsSL https://ca.live.sipgate.net:8443/certs/current_root -o "$download"
+          openssl x509 -in "$download" -noout
+          install -m 0644 "$download" "$ca"
+        fi
+        update-ca-certificates
       user: "0"
     - description: "Install fnm for the agent user"
       command: |

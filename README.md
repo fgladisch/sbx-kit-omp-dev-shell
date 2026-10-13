@@ -10,6 +10,7 @@ During sandbox creation, the kit:
 - configures OMP as the sandbox entrypoint;
 - loads the repository's `AGENTS.md` through the kit's `agentInstructions`;
 - installs Zsh, Ubuntu's `build-essential` toolchain, and fnm;
+- downloads the sipgate root CA from `ca.live.sipgate.net` and adds it to the system trust store, so internal services such as the datapls MCP server pass TLS verification;
 - installs Playwright's pinned, architecture-native Chromium build and its system libraries;
 - exposes OMP, fnm, Chromium, pnpm, and the installed language servers on the sandbox `PATH`;
 - binds the `sipgate_os`, `sonarqube`, and `langsmith` sandbox secrets to proxy-managed `SIPGATE_OS_API_KEY`, `SONARQUBE_TOKEN`, and `LANGSMITH_API_KEY` environment variables;
@@ -196,6 +197,7 @@ The kit allows the domains needed for:
 - GitHub API access and release downloads;
 - OpenAI and Anthropic authentication and model endpoints;
 - Sipgate model endpoint;
+- sipgate root CA download;
 - SonarCloud and LangSmith API access.
 
 Review `permissions.network.allow` in [`spec.yaml`](spec.yaml) before use if your environment requires a narrower egress policy.
@@ -214,7 +216,7 @@ sbx kit validate .
 
 ## Lifecycle
 
-- `setup.install` installs OMP, Zsh, fnm, and a pinned architecture-native Chromium build with Playwright's browser dependencies during sandbox creation.
+- `setup.install` installs OMP, Zsh, fnm, the sipgate root CA, and a pinned architecture-native Chromium build with Playwright's browser dependencies during sandbox creation.
 - `setup.files` writes the repository-aware Node.js setup command plus executable LSP bootstraps.
 - `setup.startup` selects the repository's Node.js version and provisions its pnpm and language-server tools. A bootstrap invocation shares the locked setup path if OMP launches a server before provisioning finishes.
 
