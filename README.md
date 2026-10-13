@@ -7,7 +7,7 @@ A standalone Docker Sandboxes kit for [Oh My Pi (`omp`)](https://github.com/can1
 During sandbox creation, the kit:
 
 - installs the latest OMP prebuilt release available for the sandbox architecture;
-- configures OMP as the sandbox entrypoint with `--approval-mode=yolo`;
+- configures OMP as the sandbox entrypoint;
 - loads the repository's `AGENTS.md` through the kit's `agentInstructions`;
 - installs Zsh, Ubuntu's `build-essential` toolchain, and fnm;
 - installs Playwright's pinned, architecture-native Chromium build and its system libraries;

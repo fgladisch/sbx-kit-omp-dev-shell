@@ -7,8 +7,6 @@ description: "Runs Oh My Pi with zsh, fnm, and repository-aware Node.js setup"
 sandbox:
   image: "docker/sandbox-templates:shell-docker"
   entrypoint: [omp]
-  command:
-    default: ["--approval-mode=yolo"]
 
 agentInstructions:
   filename: AGENTS.md
